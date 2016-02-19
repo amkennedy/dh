@@ -1,4 +1,4 @@
-function [msg,status] = refstand_data_harvester_sql(source,qc_source,template,sitecode,profile,pn_dest,pn_plots,html,email,fn_dest,reprocess)
+function [msg,status] = refstand_dh(source,qc_source,template,sitecode,profile,pn_dest,pn_plots,html,email,fn_dest,reprocess)
 %Data harvester function template for post-processing streaming
 %sensor data retrieved from an SQL data source
 %this harvester has been retired, but a new version has not been
