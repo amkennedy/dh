@@ -1,4 +1,4 @@
-function [msg,status] = gem_data_harvester(pn_source,fn_source,template,sitecode,profile,pn_dest,pn_plots,html,email,fn_dest,reprocess)
+function [msg,status] = gem_dh(pn_source,fn_source,template,sitecode,profile,pn_dest,pn_plots,html,email,fn_dest,reprocess)
 %Data harvester function template for post-processing streaming sensor data cached on a file system
 %
 %syntax: [msg,status] = data_harvester(pn_source,fn_source,template,sitecode,profile,pn_dest,pn_plots,html,email,fn_destreprocess)
@@ -63,7 +63,7 @@ if nargin >= 3
       
       %check for template argument
       if exist('template','var') ~= 1
-         template = 'GEM_v1';
+         template = '';
       end
       
       %check for profile argument
