@@ -1,4 +1,4 @@
-function [msg,status] = brp_data_harvester(data,qc_source,template,sitecode,profile,pn_dest,pn_plots,html,email,fn_dest,reprocess)
+function [msg,status] = brp_dh(data,qc_source,template,sitecode,profile,pn_dest,pn_plots,html,email,fn_dest,reprocess)
 %Data harvester function template for post-processing streaming sensor data retrieved from an SQL data source
 %2-28-2015: This harvester is specific to data logger update 2014 to CR1000
 %and currently valid for RS02_90, RS04_91, RS12_94, RS20_95, RS26_96.

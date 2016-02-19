@@ -1,4 +1,4 @@
-function msg = primet_nadp_data_harvester %(pn_source,fn_source,qc_source,template,sitecode,profile,pn_dest,pn_plots,html,email,fn_dest,reprocess)
+function msg = primet_nadp_dh %(pn_source,fn_source,qc_source,template,sitecode,profile,pn_dest,pn_plots,html,email,fn_dest,reprocess)
 
      
       %

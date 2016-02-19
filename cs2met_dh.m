@@ -1,4 +1,4 @@
-function [msg,status] = cenmet_233_data_harvester_sql_v2(source,qc_source,template,sitecode,profile,pn_dest,pn_plots,html,email,fn_dest,reprocess)
+function [msg,status] = cs2met_dh(source,qc_source,template,sitecode,profile,pn_dest,pn_plots,html,email,fn_dest,reprocess)
 %Data harvester function template for post-processing streaming sensor data retrieved from an SQL data source
 %
 %syntax: [msg,status] = data_harvester_sql(source,template,sitecode,profile,pn_dest,pn_plots,html,email,fn_dest)
@@ -132,11 +132,6 @@ if nargin >= 1
         %code for importing the source data - revise the import filter and syntax to suit data
         %
         
-        %Example: imports CSI TOA5 data using specified template, calculating a serial date and
-        %assigning the 'PST' timezone to date/time columns; note that QA/QC flags will be
-        %assigned automatically based on criteria in the template
-        % Add you import filter, in this case its sql2gceds() from LNDB
-        
         %get data from database
         try
             [data,msg] = feval(source,template);
@@ -199,11 +194,7 @@ if nargin >= 1
             
             if ~isempty(data)
                 %master list of columns to interpolate
-                interpcols = {'AIRTEMP_MEAN_150_0_04','AIRTEMP_MEAN_250_0_03','AIRTEMP_MEAN_350_0_02','AIRTEMP_MEAN_450_0_01', ...
-                    'AIRTEMP_MEAN_150_0_06','AIRTEMP_MEAN_250_0_07','AIRTEMP_MEAN_350_0_08','AIRTEMP_MEAN_450_0_09', ...
-                    'SOILTEMP_MEAN_0_100_04','SOILTEMP_MEAN_0_10_01','SOILTEMP_MEAN_0_20_02','SOILTEMP_MEAN_0_50_03', ...
-                    'SOILWC_MEAN_0_100_04','SOILWC_MEAN_0_10_01','SOILWC_MEAN_0_20_02','SOILWC_MEAN_0_50_03', ...
-                    'PRECIP_INST_455_0_01','PRECIP_INST_625_0_02'};
+                interpcols = {'ActTemp','PRECIP_INST_225_0_02','PRECIP_AVG_225_0_02','AIRTEMP_MEAN_150_0_02','AIRTEMP_MEAN_150_0_03'};
                 
                 %check for columns in active data structure, case-insensitively,
                 %constraining to floating-point data columns
@@ -227,13 +218,13 @@ if nargin >= 1
             
             %begin joindata function to join qc stats file with data
             %structure
-            col = name2col(data,{'AIRTEMP_MEAN_150_0_04','AIRTEMP_MEAN_250_0_03','AIRTEMP_MEAN_350_0_02','AIRTEMP_MEAN_450_0_01', ...
-                    'AIRTEMP_MEAN_150_0_06','AIRTEMP_MEAN_250_0_07','AIRTEMP_MEAN_350_0_08','AIRTEMP_MEAN_450_0_09'}); % check for column to qc
+            col = name2col(data,{'AIRTEMP_MEAN_150_0_02','AIRTEMP_MEAN_150_0_03'}); % check for column to qc
             if ~isempty(col)
                 
                 col = name2col(data,'Date');
                 if ~isempty(col)
-                    data = add_datepartcols(data,'Date');
+                    dateparts = [2 3 4];
+                    data = add_datepartcols(data,'Date',[],dateparts);
                 end
             
                 if ~isempty(qc_source)
@@ -278,12 +269,15 @@ if nargin >= 1
             end
             
             if ~isempty(data)
-            col = name2col(data,{'PRECIP_INST_455_0_01','PRECIP_INST_625_0_02'}); % check for column to qc
+                
+                col = name2col(data,{'PRECIP_INST_225_0_02'}); % check for column to qc
                 if ~isempty(col)
                     % run the simiplepre.m post processor
                     % Define constant variable col
                     % This will define both the value and flag
-                    col         = {'PRECIP_INST_455_0_01'};
+                    %Use station CENMET for every 5min station, use CS2MET for every 15 minute station
+                    Station     = 'CS2MET';
+                    col         = {'PRECIP_INST_225_0_02'};
                     dt          = 'Date';
                     
                     % Convert to format for simple precip function
@@ -292,25 +286,23 @@ if nargin >= 1
                         DateCol     = name2col(data,dt);
                         GaugeCol    = name2col(data,col);
                         FlagCol     = name2col(data,col);
-                        %Use station CENMET for every 5min station, use CS2MET for every 15 minute station
-                        Station     = 'CENMET';
                         clear dt
                         
                         %Results = simplepre(GaugeCol, FlagCol, Station, data);
-                        Results = simplepre2_j(GaugeCol, FlagCol, Station, data);
+                        Results = simplepre2_j(GaugeCol, FlagCol, Station, data); % updated simplepre fx call on 20150818
                         
-                        Diffs_455       = cell2mat(Results(:,5));
-                        Flag_Diffs_455  = Results(:,6);
+                        Diffs_N4       = cell2mat(Results(:,5));
+                        Flag_Diffs_N4  = Results(:,6);
                         
-                        col = name2col(data,'PRECIP_INST_455_0_01');
+                        col = name2col(data,'PRECIP_INST_225_0_02');
                         if ~isempty(col)
                             % add new column for corrected precip diffs
                             [data,msg] = addcol( ...
                                 data, ...                                        % original data structure (required)
-                                Diffs_455, ...                                       % an array of calculated values (required)
-                                'PRECIP_TOT_455_0_01', ...                       % the name of the new column (required)
+                                Diffs_N4, ...                                       % an array of calculated values (required)
+                                'PRECIP_TOT_225_0_02', ...                       % the name of the new column (required)
                                 'mm', ...                                    % the units string for the new column (required)
-                                'Increment corrected total precipitation', ...     % the description for the new column (optional - default = name)
+                                'Automatically corrected increment total precipitation', ...     % the description for the new column (optional - default = name)
                                 'f', ...                                         % the data type of the new column (optional - default = 'f' or 's')
                                 'data', ...                                      % the variable type of the new column (optional - default = 'calculation')
                                 'continuous', ...                                 % the numerical type of the new column (optional)
@@ -322,10 +314,10 @@ if nargin >= 1
                         
                         % add the flags to the ds generated by simplepre
                         % update diff_flag column with flags created by sub-function
-                        col      = {'PRECIP_TOT_455_0_01'};        %values to be flagged
+                        col      = {'PRECIP_TOT_225_0_02'};        %values to be flagged
                         Icols    = name2col(data,col);
                         Irows    = [];
-                        flag     = Flag_Diffs_455;                  %cell array of flags
+                        flag     = Flag_Diffs_N4;                  %cell array of flags
                         
                         if ~isempty(col)
                             [data,msg] = addflags( ...
@@ -336,160 +328,16 @@ if nargin >= 1
                                 );
                         end
                     end
-                    clearvars Results col Diffs_455 Flag_Diffs_455 col DateCol flag FlagCol GaugeCol Icols Irows Station
+                    clearvars Results col Diffs_N4 Flag_Diffs_N4 DateCol FlagCol GaugeCol Station col
                     
-                    % run the simiplepre.m post processor
-                    % Define constant variables
-                    col         = {'PRECIP_INST_625_0_02'};
-                    dt          = 'Date';
-                    
-                    % Convert to format for simple precip function
-                    %data        = flags2cols(data,col);
+                    col = name2col(data,'PRECIP_INST_225_0_02');
+                    %convert PPT_AVG from in to mm
                     if ~isempty(col)
-                        DateCol     = name2col(data,dt);
-                        GaugeCol    = name2col(data,col);
-                        FlagCol     = name2col(data,col);
-                        %Use station CENMET for every 5min station, use CS2MET for every 15 minute station
-                        Station     = 'CENMET';
-                        clear dt
-                        
-                        %Results = simplepre(GaugeCol, FlagCol, Station, data);
-                        Results = simplepre2_j(GaugeCol, FlagCol, Station, data);
-                        
-                        Diffs_625       = cell2mat(Results(:,5));
-                        Flag_Diffs_625  = Results(:,6);
-                        
-                        col = name2col(data,'PRECIP_INST_625_0_02');
-                        if ~isempty(col)
-                            % add new column for corrected precip diffs
-                            [data,msg] = addcol( ...
-                                data, ...                                        % original data structure (required)
-                                Diffs_625, ...                                       % an array of calculated values (required)
-                                'PRECIP_TOT_625_0_02', ...                       % the name of the new column (required)
-                                'mm', ...                                    % the units string for the new column (required)
-                                'Increment corrected total precipitation', ...     % the description for the new column (optional - default = name)
-                                'f', ...                                         % the data type of the new column (optional - default = 'f' or 's')
-                                'data', ...                                      % the variable type of the new column (optional - default = 'calculation')
-                                'continuous', ...                                 % the numerical type of the new column (optional)
-                                2, ...                                           % the number of decimal places to use for text output
-                                '', ...                                          % the flagging criteria for the new column (optional - default = '')
-                                col+1 ...                                          % the column position (1 = beginning, [] = last)
-                                );
-                        end
-                        
-                        % add the flags to the ds generated by simplepre
-                        % update diff_flag column with flags created by sub-function
-                        col      = {'PRECIP_TOT_625_0_02'};        %values to be flagged
-                        Icols    = name2col(data,col);
-                        Irows    = [];
-                        flag     = Flag_Diffs_625;                  %cell array of flags
-                        
-                        if ~isempty(col)
-                            [data,msg] = addflags( ...
-                                data, ...              % data structure to update (struct, required)
-                                Icols, ...          %Icols = array of column names or numeric indicies to update (numeric or cell array of strings, required)
-                                Irows, ...          %Irows = array of row numbers to update (numeric array, required, [] = all)
-                                flag ...            %flag = flag character or array of flags matching Irows to assign (character or cell array, required)
-                                );
-                        end
+                        [data,msg] = unit_convert(data,'PRECIP_INST_225_0_02','mm','x*25.4');
                     end
-                    clearvars Results col Diffs_625 Flag_Diffs_625 col DateCol flag FlagCol GaugeCol Icols Irows Station
                 end
             end
             
-            if ~isempty(data)
-                
-                col = name2col(data,'SNOWDEP_INST_0_0_01');
-                if ~isempty(col)
-                     md = running_median(extract(data,'SNOWDEP_INST_0_0_01'),12,1,'back');
-                    
-                    % add new column for running median snow depth
-                    [data,msg] = addcol( ...
-                        data, ...                                        % original data structure (required)
-                        md, ...                                       % an array of calculated values (required)
-                        'SNOWDEP_MED_0_0_01', ...                       % the name of the new column (required)
-                        'm', ...                                    % the units string for the new column (required)
-                        '12 point running median of SNOWDEP_INST', ...     % the description for the new column (optional - default = name)
-                        'f', ...                                         % the data type of the new column (optional - default = 'f' or 's')
-                        'data', ...                                      % the variable type of the new column (optional - default = 'calculation')
-                        'continuous', ...                                 % the numerical type of the new column (optional)
-                        2, ...                                           % the number of decimal places to use for text output
-                        '', ...                      % the flagging criteria for the new column (optional - default = '')
-                        col+1 ...                                          % the column position (1 = beginning, [] = last)
-                        );
-                end
-            end
-            
-            if ~isempty(data)
-                
-                col = name2col(data,'SNOWDEP_INST_0_0_01');
-                %convert SNOWDEP_INST from m to mm
-                if ~isempty(col)
-                    [data,msg] = unit_convert(data,'SNOWDEP_INST_0_0_01','mm');
-                end
-                
-                col = name2col(data,'SNOWDEP_MED_0_0_01');
-                %convert SNOWDEP_MED from m to mm
-                if ~isempty(col)
-                    [data,msg] = unit_convert(data,'SNOWDEP_MED_0_0_01','mm');
-                end
-                
-                col = name2col(data,'SNOWMELT_TOT_0_0_01');
-                %convert LYS_TB_TOT from tip to mm
-                if ~isempty(col)
-                    [data,msg] = unit_convert(data,'SNOWMELT_TOT_0_0_01','mm','x*0.254');
-                end
-                
-                %Revise values for Solar radiation sensor (upward facing sensor that
-                %measures down-welling solar radation)
-%                 col = name2col(data,{'SOLAR_MEAN_625_0_01'});
-%                 if ~isempty(col)
-%                     [data,msg] = num_replace(data, ...
-%                         {'SOLAR_MEAN_625_0_01'}, ...                     %columns to update
-%                         'SOLAR_MEAN_625_0_01 < 1', ...                  %criteria to match
-%                         0, ...                                 %new value to assign
-%                         1, ...                                 %change log option
-%                         '' ...                                 %flag to assign for revised values ('' for none)
-%                         );
-%                 end
-                
-                %AIR_150 and associated to flag sensor removal
-                col = name2col(data,{'AIRTEMP_MEAN_150_0_04'});
-                if ~isempty(col)
-                    [data,msg] = num_replace(data, ...
-                        {'AIRTEMP_MEAN_150_0_04','AIRTEMP_MAX_150_0_04','AIRTEMP_MIN_150_0_04','DEWPT_MEAN_150_0_04','DEWPT_MIN_150_0_04','DEWPT_MAX_150_0_04' ...
-                        'RELHUM_MEAN_150_0_04'}, ...                   %columns to update
-                        'AIRTEMP_150_DIAG = 0', ...                                 %criteria to match
-                        NaN, ...                                                %new value to assign
-                        1, ...                                                  %change log option
-                        'M' ...                                                 %flag to assign for revised values ('' for none)
-                        );
-                end
-                
-                %AIR_250 and associated to flag sensor removal
-                col = name2col(data,{'AIRTEMP_MEAN_250_0_03'});
-                if ~isempty(col)
-                    [data,msg] = num_replace(data, ...
-                        {'AIRTEMP_MEAN_250_0_03'}, ...                   %columns to update
-                        'AIRTEMP_250_DIAG = 0', ...                                 %criteria to match
-                        NaN, ...                                                %new value to assign
-                        1, ...                                                  %change log option
-                        'M' ...                                                 %flag to assign for revised values ('' for none)
-                        );
-                end
-                
-                %Set snow to zero when manual inspection confirms no snow.
-                col = name2col(data,{'SNOWDEP_INST_0_0_01','SWE_INST_0_0_01'});
-                if ~isempty(col)
-                    [data,msg] = num_replace(data, ...
-                        {'SNOWDEP_INST_0_0_01','SNOWDEP_MED_0_0_01','SWE_INST_0_0_01'}, ...                                                            %columns to update
-                        'SNOW_DIAG = 0', ...                                                                                    %criteria to match
-                        0, ...                                                                                                  %new value to assign
-                        1, ...                                                                                                  %change log option
-                        '' ...                                                                                                  %flag to assign for revised values ('' for none)
-                        );
-                end
-            end
             
             if ~isempty(data)
                 
@@ -499,12 +347,6 @@ if nargin >= 1
                     {'Date'}, ...               %{data.name{2}}, ...        %date column
                     'verbose' ...               %logging option
                     );
-                
-                %delete uneeded columns
-                col = name2col(data,{'AIRTEMP_150_DIAG','AIRTEMP_250_DIAG'});
-                if ~isempty(col)
-                    [data,msg] = deletecols(data,{'AIRTEMP_150_DIAG','AIRTEMP_250_DIAG'});
-                end
             end
             
             if ~isempty(data)
@@ -544,7 +386,7 @@ if nargin >= 1
                     end
                 end
             end
-            
+                     
             if ~isempty(data)
                 %check new records for duplicate records
                 [data,msg] = cleardupes( ...
@@ -563,38 +405,14 @@ if nargin >= 1
                 %save .mat file to destination
                 save([pn_data,filesep,fn_dest],'data')
                 
-                % Correct serial date round off errors and output date string
-                col = name2col(data,{'Date'});
-                if ~isempty(col)
-                    dummy = extract_rows(data,'Date');
-                    myDateTime = datetime(dummy, 'ConvertFrom', 'datenum','Format','yyyy-MM-dd HH:mm:ss');
-                    myDateTime = dateshift(myDateTime, 'start', 'second', 'nearest');
-                    myDateTime = cellstr(myDateTime);
-                    
-                    if ~isempty(data)
-                        delcols = {'Date'};
-                        data = deletecols(data,delcols);
-                    end
-                    
-                    % add new column to date structure
-                    [data,msg] = addcol( ...
-                        data, ...                                        	% original data structure (required)
-                        myDateTime, ...                                     % an array of calculated values (required)
-                        'Date', ...                       					% the name of the new column (required)
-                        'yyyy-MM-dd HH:mm:ss', ...                          % the units string for the new column (required)
-                        'Round off corrected corrected serial date', ...    % the description for the new column (optional - default = name)
-                        's', ...                                         	% the data type of the new column (optional - default = 'f' or 's')
-                        'datetime', ...                                     % the variable type of the new column (optional - default = 'calculation')
-                        'none', ...                                 		% the numerical type of the new column (optional)
-                        0, ...                                           	% the number of decimal places to use for text output
-                        '', ...                                          	% the flagging criteria for the new column (optional - default = '')
-                        col ...                                          	% the column position (1 = beginning, [] = last)
-                        );
-                end
-                
                 %generate name for csv file
                 [~,fn_base] = fileparts(fn_dest);
                 fn_csv = [fn_base,'.csv'];
+                
+                col = name2col(data,'Date');
+                if ~isempty(col)
+                    data = convert_date_format(data,'Date',31); %convert the copied dates to yyyy-mm-dd HH:MM:SS
+                end
                 
                 %export .csv file with separate metadata in FLED style with q/c flag columns for all
                 %data/calc columns (see 'help exp_ascii' for all options)
@@ -614,6 +432,10 @@ if nargin >= 1
                 if ~isempty(data)
                     signature_email(sitecode, data);
                 end
+                
+%                 tEnd = toc;
+%                 matlabmail({'adam.kennedy@oregonstate.edu'}, ['All the columns from' sitecode 'have been processed. This includes: ' data.name(1,1:length(data.name)) '...'], ...
+%                     ['Last harvester completed processing ' datestr(now) ' and required ' num2str(tEnd) ' seconds.']);
                 
                 %generate name for html file
                 fn_html = [pn_data,filesep,fn_base,'-data.html'];
@@ -659,29 +481,6 @@ if nargin >= 1
 %                 
 %             end
             
-%             %index the destination directory to create/update XML index and data set summary pages
-            % harvest_datapages_xml( ...
-                % pn_dest, ...     %base pathname containing files to index
-                % '', ...          %subdirectories in pn_dest to index
-                % profile_hrly, ...     %profile name in harvest_info.m
-                % html, ...        %set HTML format option to transform XML to HTML
-                % '', ...          %set interval to automatic
-                % 'MD' ...         %flag display format ('MD' = flag columns for all data/calc columns)
-                % );
-            
-            %generate plots using stored configuration info in demo/harvest_plot_info.m if pn_plots provided
-            % if ~isempty(s3) && ~isempty(pn_plots)
-                
-                % msg = harvest_webplots_xml( ...
-                    % fn_dest_dly, ...   %filename of data structure to plot
-                    % pn_data, ...   %pathname containing fn_dest
-                    % pn_plots, ...  %pathname for plot files
-                    % profile_dly, ...   %profile name in harvest_plot_info.m
-                    % 'year', ...    %plot interval
-                    % html ...       %set HTML format option to transform XML to HTML
-                    % );
-                
-            % end
         end
         
         %generate status output

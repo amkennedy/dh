@@ -1,4 +1,4 @@
-function [msg,status] = green_data_harvester_sql(source,template,sitecode,profile,profile_dly,pn_dest,pn_plots,html,email,fn_dest,fn_dest_dly,reprocess)
+function [msg,status] = green_dh(source,template,sitecode,profile,profile_dly,pn_dest,pn_plots,html,email,fn_dest,fn_dest_dly,reprocess)
 %Data harvester function template for post-processing streaming sensor data retrieved from an SQL data source
 %This harvester is specific to data logger update 2014 to CR1000
 %

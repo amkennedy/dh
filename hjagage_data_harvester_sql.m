@@ -1,4 +1,4 @@
-function [msg,status] = hjagage_data_harvester_sql(source,template,sitecode,profile,pn_dest,pn_plots,html,email,fn_dest)
+function [msg,status] = hjagage_dh(source,template,sitecode,profile,pn_dest,pn_plots,html,email,fn_dest)
 %Data harvester function template for post-processing streaming sensor data retrieved from an SQL data source
 %Build for array based loggers
 %
