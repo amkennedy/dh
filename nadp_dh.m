@@ -1,8 +1,9 @@
-function msg = primet_nadp_dh %(pn_source,fn_source,qc_source,template,sitecode,profile,pn_dest,pn_plots,html,email,fn_dest,reprocess)
+function msg = nadp_dh %(pn_source,fn_source,qc_source,template,sitecode,profile,pn_dest,pn_plots,html,email,fn_dest,reprocess)
 
      
       %
       %code for importing the source data - revise the import filter and syntax to suit dat
+      %this is a quick version of a dh, not best practice in general.
       
       load 'E:\temp\NADP\data\nadp_noahiv_2015.mat';
       sitecode = 'prim_nadp';    

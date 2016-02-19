@@ -435,71 +435,7 @@ if nargin >= 1
                  'verbose' ...              %logging option
                  );
          end
-            
-%          %create hourly summaries
-%             if ~isempty(data)
-%                 s = data;
-%                 interval = 'hour';
-%                 dtcols = [];
-%                 aggrcols = [];
-%                 statcols = [];
-%                 statopt = 4;
-%                 flagopt = 0;
-%                 qcrules = [];
-%                 missing_anom = 1;
-%                 
-%                 [s2,msg] = aggr_datetime(s,interval,dtcols,aggrcols,statcols,statopt,flagopt,qcrules,missing_anom);
-%             end
-            
-%             if ~isempty(sitecode)
-%                 
-%                 s2 = addcol( ...
-%                     s2, ...        %date structure to update
-%                     sitecode, ...    %site code to add (will be replicated to all rows)
-%                     'Site', ...      %column name to assign
-%                     '', ...          %column units
-%                     'Site code', ... %column description
-%                     's', ...         %data type
-%                     'nominal', ...   %variable type
-%                     'none', ...      %numeric type
-%                     0, ...           %numeric precision
-%                     '', ...          %Q/C flagging criteria
-%                     1 ...            %column position in data set
-%                     );
-%             end
-            
-            %create daily summaries
-%             if ~isempty(data)
-%                 s = data;
-%                 interval = 'day';
-%                 dtcols = [];
-%                 aggrcols = [];
-%                 statcols = [];
-%                 statopt = 4;
-%                 flagopt = 0;
-%                 qcrules = [];
-%                 missing_anom = 1;
-%                 
-%                 [s3,msg] = aggr_datetime(s,interval,dtcols,aggrcols,statcols,statopt,flagopt,qcrules,missing_anom);
-%             end
-            
-%             if ~isempty(sitecode)
-%                 
-%                 s3 = addcol( ...
-%                     s3, ...        %date structure to update
-%                     sitecode, ...    %site code to add (will be replicated to all rows)
-%                     'Site', ...      %column name to assign
-%                     '', ...          %column units
-%                     'Site code', ... %column description
-%                     's', ...         %data type
-%                     'nominal', ...   %variable type
-%                     'none', ...      %numeric type
-%                     0, ...           %numeric precision
-%                     '', ...          %Q/C flagging criteria
-%                     1 ...            %column position in data set
-%                     );
-%             end
-                
+         
             %
             %code for saving 5min data file and generating export formats goes here
             %

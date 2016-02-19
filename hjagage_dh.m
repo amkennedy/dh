@@ -504,12 +504,6 @@ if nargin >= 1
           status = 1;
       end
       
-      %generate status to console
-      if isempty(msg)
-          X = [sitecode,' we are done here'];
-          disp(X)
-      end
-      
       %send post-harvest email if specified
       if ~isempty(email)
          
