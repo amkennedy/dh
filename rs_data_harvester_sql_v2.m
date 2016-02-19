@@ -1,7 +1,9 @@
 function [msg,status] = rs_data_harvester_sql_v2(source,qc_source,template,sitecode,profile,pn_dest,pn_plots,html,email,fn_dest,reprocess)
 %Data harvester function template for post-processing streaming sensor data retrieved from an SQL data source
 %2-28-2015: This harvester is specific to data logger update 2014 to CR1000
-%and currently valid for RS02_90, RS04_91, RS12_94, RS20_95, RS26_96.
+%and currently valid for RS02_90, RS04_91, RS12_94, RS20_95,
+%RS26_96.
+%to do: add functionality for RS05, RS10, RS38, RS86, and RS89
 %
 %syntax: [msg,status] = data_harvester_sql(source,template,sitecode,profile,pn_dest,pn_plots,html,email,fn_dest)
 %
